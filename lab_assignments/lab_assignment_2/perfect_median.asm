@@ -43,9 +43,9 @@ loopmain:
         push ecx
         sub ecx,1
         call partial_sum    ; Get lower sum 1 to ecx-1
-        mov eax,ecx         ; Move ecx to eax
+        mov eax,ecx         ; Move lsum ecx to eax
         mov ecx,[esp]       ; Get ecx from stack
-        push eax            ; Put eax/lower sum on stack
+        push eax            ; Put lsum eax onto stack
         call subloop        ; Check all vals from ecx+1 to 10,000
         add esp,4           ; Get eax off the stack
         pop ecx
@@ -53,26 +53,40 @@ loopmain:
 
         add ecx,1
         cmp ecx,9999
-        jb loopmain
+        jbe loopmain
         jmp thatsallfolks   ; END the program.
 
 subloop:
-        ;; get start from ecx
+        ;; get middle from ecx
         ;; go to 10,000
         ;; get lsum from stack.
         push eax
         push ebx
         push edx
-        mov eax,[esp+16]
-        mov ecx,eax
-        add ecx,1
+        ;; ----------------
 
-        call buzzval
+        mov eax,[esp+16]    ; lsum is eax
+        mov ebx,ecx         ; middle is ebx
+        add ebx,1           ; middle + 1 is ebx
+        mov ecx,ebx         ; middle + 1 is ecx
+        add ecx,1           ; middle + 2 is ecx
+        mov edx,ebx         ; middle + 1 is edx
+
         sublooptop:
-
-                sub ecx,1
+                add edx,ecx ; rsum is edx
+                cmp eax,edx ; lsum == rsum?
+                jne noprint 
+                push ecx    ; n is ecx
+                push ebx    ; middle + 1 is ebx
+                sub ebx,1   ; middle is ebx
+                mov ecx,ebx ; middle is ecx
+                call buzzval
+                pop ebx     ; middle + 1 is ebx
+                pop ecx     ; n is ecx
+        noprint:
+                add ecx,1   ; middle + n + 1 is ecx
                 cmp ecx,10000
-                ; jne, jb, jbe sublooptop
+                jbe sublooptop
         pop edx
         pop ebx
         pop eax
@@ -136,19 +150,6 @@ divideby:
         pop edx
         pop ebx
         pop eax
-        ret
-
-isdiviz:
-        ;; Accepts N out of ecx
-        ;; Accepts 5 as static
-        ;; prints if N/5 has zero remainder.
-        xor edx,edx     ; Clear the MSBs
-        mov eax,ecx     ; Set the LSBs: Since 100 < (2 ^ 32) - 1
-        mov ebx,5
-        div ebx         ; Divide eax by 5
-        cmp edx,0       ; Remainder - 0?
-        jne buzzval     ; Return if Remainder != 0
-        ; call fiznum
         ret
 
 buzzval:
