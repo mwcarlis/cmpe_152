@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 char blob[100];
+// To set DEBUG debug=1
+int debug=0;
 int class;
 
 #define OP      1
@@ -26,8 +28,7 @@ oper [+|-|\*|\/]
 
 num {digit}+
 
-id {letter}[{letter}|{digit}]*
-tok [^ \t\n]*
+id {letter}({letter}|{digit})*
 
 whitespace [ \t\n]*
 
@@ -41,17 +42,16 @@ whitespace [ \t\n]*
 
 {num}           return(NUM);
 {id}            return(ID);
-{tok}           return(TOKEN);
 <<EOF>>         return(EOF);
 {whitespace}    ;
 
 %%
 
-
 int main(int argc, char *argv[]) {
     class = yylex();
     sprintf(blob, "%s", yytext); 
-    //printf("copied %d %s\n", class, blob);
+    if (debug == 1)
+        printf("copied %d %s\n", class, blob);
     if (Expr() == 1) {
         if (class == EOF) {
             printf("SUCCESS\n");
@@ -67,14 +67,16 @@ void Fail() {
 }
 
 int Expr() {
-    //printf("Expr()\n");
+    if (debug == 1)
+        printf("Expr()\n");
     if (Term() == 1)
         return EPrime(); 
     else Fail();
 }
 
 int EPrime() {
-    //printf("EPrime(): %d %s\n", class, yytext);
+    if (debug == 1)
+        printf("EPrime(): %d %s\n", class, yytext);
 
     if (class == OP && (strcmp("+", blob) == 0 ||
                         strcmp("-", blob) == 0)) {
@@ -85,21 +87,20 @@ int EPrime() {
             return EPrime();
         else Fail();
     } else if (strcmp(")", blob) == 0 || class == EOF) {
-        //printf("In here?\n");
         return 1;
     }
     return 0;
 }
 
 int Term() {
-    //printf("Term()\n");
     if (Factor() == 1)
         return TPrime();
     else Fail();
 }
 
 int TPrime() {
-    //printf("TPrime(): %s\n", blob);
+    if (debug == 1)
+        printf("TPrime(): %s\n", blob);
 
     if (class == OP && (strcmp("*", blob) == 0 ||
                         strcmp("/", blob) == 0)) {
@@ -118,7 +119,8 @@ int TPrime() {
 }
 
 int Factor() {
-    // printf("Factor(): %d, %s\n", class, yytext);
+    if (debug == 1)
+        printf("Factor(): %d, %s\n", class, yytext);
     if (strcmp("(", blob) == 0) {
         class = yylex();
         sprintf(blob, "%s", yytext); 
@@ -130,10 +132,10 @@ int Factor() {
         sprintf(blob, "%s", yytext); 
         return 1;
     } else if (class == NUM || class == ID) {
-        //printf("val %d, %s\n", class, yytext);
         class = yylex();
         sprintf(blob, "%s", yytext); 
-        //printf("eof? %d, %s\n", class, yytext);
+        if (debug == 1)
+            printf("eof? %d, %s\n", class, yytext);
         return 1;
     }
     Fail();
