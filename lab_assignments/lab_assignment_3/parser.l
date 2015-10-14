@@ -51,7 +51,9 @@ whitespace [ \t\n]*
 %%
 
 void TopBoilerPlate() {
+    printf("\n");
     printf("SECTION .data\n");
+    printf("ResultPrint: db \"%%u\",10,0\n");
     printf("SECTION .bss\n");
     printf("SECTION .text\n");
     printf("extern printf\n");
@@ -68,6 +70,9 @@ void TopBoilerPlate() {
 }
 
 void BottomBoilerPlate() {
+    printf("\tpush ResultPrint\n");
+    printf("\tcall printf\n");
+    printf("\tadd esp,8\n");
     printf("\n");
     printf("; Everything after this is boilerplate.\n");
     printf("\tpop edi\n");
@@ -76,6 +81,7 @@ void BottomBoilerPlate() {
     printf("\tmov esp,ebp\n");
     printf("\tpop ebp\n");
     printf("\tret\n");
+    printf("\n");
 
 }
 
@@ -160,11 +166,13 @@ int TPrime() {
         sprintf(blob, "%s", yytext); 
 
         if (Factor() == 1) {
-            printf("\tpop eax\n");
-            printf("\tpop ebx\n");
             if (strcmp("*", &op) == 0) {
-                printf("\tmult eax,ecx\n");
+                printf("\tpop eax\n");
+                printf("\tpop ebx\n");
+                printf("\timul ebx\n");
             } else if (strcmp("/", &op) == 0) {
+                printf("\tpop ebx\n");
+                printf("\tpop eax\n");
                 printf("\txor edx,edx\n");
                 printf("\tdiv ebx\n");
             }
