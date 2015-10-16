@@ -27,7 +27,7 @@ int Factor();
 digit [0-9]
 letter [a-zA-Z]
 assign =
-oper [+|-|\*|\/]
+oper [\+|\-|\*|\/]
 
 num {digit}+
 
@@ -51,37 +51,41 @@ whitespace [ \t\n]*
 %%
 
 void TopBoilerPlate() {
-    printf("\n");
-    printf("SECTION .data\n");
-    printf("ResultPrint: db \"%%u\",10,0\n");
-    printf("SECTION .bss\n");
-    printf("SECTION .text\n");
-    printf("extern printf\n");
-    printf("global main\n");
-    printf("main:\n");
-    printf("\tnop\n");
-    printf("\tpush ebp\n");
-    printf("\tmov ebp,esp\n");
-    printf("\tpush ebx\n");
-    printf("\tpush esi\n");
-    printf("\tpush edi\n");
-    printf("; Everything before this is boilerplate.\n");
-    printf("\n");
+    if (debug == 0) {
+        printf("\n");
+        printf("SECTION .data\n");
+        printf("ResultPrint: db \"%%u\",10,0\n");
+        printf("SECTION .bss\n");
+        printf("SECTION .text\n");
+        printf("extern printf\n");
+        printf("global main\n");
+        printf("main:\n");
+        printf("\tnop\n");
+        printf("\tpush ebp\n");
+        printf("\tmov ebp,esp\n");
+        printf("\tpush ebx\n");
+        printf("\tpush esi\n");
+        printf("\tpush edi\n");
+        printf("; Everything before this is boilerplate.\n");
+        printf("\n");
+    }
 }
 
 void BottomBoilerPlate() {
-    printf("\tpush ResultPrint\n");
-    printf("\tcall printf\n");
-    printf("\tadd esp,8\n");
-    printf("\n");
-    printf("; Everything after this is boilerplate.\n");
-    printf("\tpop edi\n");
-    printf("\tpop esi\n");
-    printf("\tpop ebx\n");
-    printf("\tmov esp,ebp\n");
-    printf("\tpop ebp\n");
-    printf("\tret\n");
-    printf("\n");
+    if (debug == 0) {
+        printf("\tpush ResultPrint\n");
+        printf("\tcall printf\n");
+        printf("\tadd esp,8\n");
+        printf("\n");
+        printf("; Everything after this is boilerplate.\n");
+        printf("\tpop edi\n");
+        printf("\tpop esi\n");
+        printf("\tpop ebx\n");
+        printf("\tmov esp,ebp\n");
+        printf("\tpop ebp\n");
+        printf("\tret\n");
+        printf("\n");
+    }
 
 }
 
@@ -128,14 +132,16 @@ int EPrime() {
         sprintf(blob, "%s", yytext); 
         if (Term() == 1) {
 
-            printf("\tpop ecx\n");
-            printf("\tpop eax\n");
-            if (strcmp("+", &op) == 0) {
-                printf("\tadd eax,ecx\n");
-            } else if (strcmp("-", &op) == 0) {
-                printf("\tsub eax,ecx\n");
+            if (debug == 0) {
+                printf("\tpop ecx\n");
+                printf("\tpop eax\n");
+                if (strcmp("+", &op) == 0) {
+                    printf("\tadd eax,ecx\n");
+                } else if (strcmp("-", &op) == 0) {
+                    printf("\tsub eax,ecx\n");
+                }
+                printf("\tpush eax\n");
             }
-            printf("\tpush eax\n");
 
             return EPrime();
         } else {
@@ -154,29 +160,31 @@ int Term() {
 }
 
 int TPrime() {
-    char op;
+    char op[4];
     if (debug == 1)
         printf("TPrime(): %s\n", blob);
 
     if (class == OP && (strcmp("*", blob) == 0 ||
                         strcmp("/", blob) == 0)) {
-        sprintf(&op, "%s", blob);
+        sprintf(op, "%s", blob);
 
         class = yylex();
         sprintf(blob, "%s", yytext); 
 
         if (Factor() == 1) {
-            if (strcmp("*", &op) == 0) {
-                printf("\tpop eax\n");
-                printf("\tpop ebx\n");
-                printf("\timul ebx\n");
-            } else if (strcmp("/", &op) == 0) {
-                printf("\tpop ebx\n");
-                printf("\tpop eax\n");
-                printf("\txor edx,edx\n");
-                printf("\tdiv ebx\n");
+            if (debug == 0) {
+                if (strcmp("*", op) == 0) {
+                    printf("\tpop eax\n");
+                    printf("\tpop ebx\n");
+                    printf("\timul ebx\n");
+                } else if (strcmp("/", op) == 0) {
+                    printf("\tpop ebx\n");
+                    printf("\tpop eax\n");
+                    printf("\txor edx,edx\n");
+                    printf("\tdiv ebx\n");
+                }
+                printf("\tpush eax\n");
             }
-            printf("\tpush eax\n");
 
             return TPrime();
         } else {
@@ -205,7 +213,9 @@ int Factor() {
         sprintf(blob, "%s", yytext); 
         return 1;
     } else if (class == NUM || class == ID) {
-        printf("\tpush dword %s\n", blob);
+        if (debug == 0) {
+            printf("\tpush dword %s\n", blob);
+        }
         class = yylex();
         sprintf(blob, "%s", yytext); 
 
