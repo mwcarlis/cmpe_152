@@ -1,0 +1,55 @@
+ Arglist at 0xffffd548, args: y=5                                                                                                                                                                         [7/1859]
+ Locals at 0xffffd548, Previous frame's sp is 0xffffd550
+ Saved registers:
+  ebp at 0xffffd548, eip at 0xffffd54c
+(gdb) backtrace
+#0  loyd (y=5) at a_c_program.c:13
+#1  0x08048466 in main () at a_c_program.c:10
+(gdb) info args
+y = 5
+(gdb) info locals
+x = -136176648
+p = "S\177\344\367\000\000\000\000\000\000\301\000\001\000\000"
+(gdb) s
+16              x = 10 + y;
+(gdb) s
+17              return steve(x);
+(gdb) backtrace
+#0  loyd (y=5) at a_c_program.c:17
+#1  0x08048466 in main () at a_c_program.c:10
+(gdb) s
+
+Breakpoint 3, steve (y=15) at a_c_program.c:20
+20      int steve(int y) {
+(gdb) backtrace
+#0  steve (y=15) at a_c_program.c:20
+#1  0x0804849f in loyd (y=5) at a_c_program.c:17
+#2  0x08048466 in main () at a_c_program.c:10
+(gdb) info args
+y = 15
+(gdb) info locals
+l = 9
+p = "?\000\300\003"
+(gdb) info frame
+Stack level 0, frame at 0xffffd510:
+ eip = 0x80484b8 in steve (a_c_program.c:20); saved eip = 0x804849f
+ called by frame at 0xffffd550
+ source language c.
+ Arglist at 0xffffd508, args: y=15
+ Locals at 0xffffd508, Previous frame's sp is 0xffffd510
+ Saved registers:
+  ebp at 0xffffd508, eip at 0xffffd50c
+(gdb) s
+23              l = 15 + y;
+(gdb) s
+24              return tom(l);
+(gdb) s
+
+Breakpoint 4, tom (weird_level=30) at a_c_program.c:29
+29              z = 20 + weird_level;
+(gdb) backtrace
+#0  tom (weird_level=30) at a_c_program.c:29
+#1  0x080484d7 in steve (y=15) at a_c_program.c:24
+#2  0x0804849f in loyd (y=5) at a_c_program.c:17
+#3  0x08048466 in main () at a_c_program.c:10
+
