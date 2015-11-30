@@ -1,16 +1,24 @@
+#!/usr/bin/python
 import timeit
+import os
 import subprocess
 
 def no_optimization():
     cmd = "./main.o"
+    if not os.path.isfile('main.o'):
+        raise Exception('main.o does not exist')
     subprocess.check_output([cmd])
 
 def O1_optimization():
     cmd = "./main_O1.o"
+    if not os.path.isfile('main_O1.o'):
+        raise Exception('main_O1.o does not exist')
     subprocess.check_output([cmd])
 
 def O2_optimization():
     cmd = "./main_O2.o"
+    if not os.path.isfile('main_O2.o'):
+        raise Exception('main_O2.o does not exist')
     subprocess.check_output([cmd])
 
 def time_runs(func_setup=''):
@@ -27,3 +35,4 @@ def test_runs():
 
 if __name__ == "__main__":
     test_runs()
+
