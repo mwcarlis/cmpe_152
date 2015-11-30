@@ -33,7 +33,7 @@ xypowz:
         pop ebp
         ret
 
-looppow: ; Perform (eax ^ edx)
+looppow: ; perform (eax * ebx) for edx loops. i.e eax ^ edx
         imul eax, ebx
         add ecx, 1
         cmp ecx, edx

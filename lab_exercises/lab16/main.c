@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-extern int mypow(int x, int y, int z);
+int mypow(int x, int y, int z);
 
 int main(void) {
         int x, y, z;
