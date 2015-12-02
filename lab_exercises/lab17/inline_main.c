@@ -2,14 +2,14 @@
 #include "main.h"
 
 
-static inline int
-swap(int *a, int *b) {
-        int val;                                                               
-        int val2;                                                              
-        val = *b;                                                              
-        val2 = *a;                                                             
-        *b = val;                                                              
-        *b = val2;                                                             
+__attribute__((always_inline))
+static inline int swap(int *a, int *b) {
+        int val; 
+        int val2; 
+        val = *b; 
+        val2 = *a; 
+        *b = val;
+        *b = val2; 
         return 0;
 }
 

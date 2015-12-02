@@ -22,7 +22,7 @@ def time_runs(program='', func_setup=''):
 
 def test_runs():
     files = os.listdir(os.getcwd())
-    binaries = [runnable for runnable in files if BINARY_EXT in runnable]
+    binaries = [runnable for runnable in files if BINARY_EXT in runnable[-2:]]
     if len(binaries) <= 0:
         msg = "We didn't find any executables to run. <>{}"
         raise Exception(msg.format(BINARY_EXT))
