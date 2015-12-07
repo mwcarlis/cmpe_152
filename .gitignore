@@ -1,6 +1,11 @@
 *run
 *.lst
 *.o
+*.out
 y.tab.c
 y.tab.h
+lex.yy.c
+cminus.hh
+cminus.cc
+cminus.output
 

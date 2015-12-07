@@ -26,7 +26,7 @@ int main(void) {
 
         std::cout << sym_table.is_entry("Hello World") << "\t" << sym_table.is_entry(test_symbol) << std::endl;
         std::cout << sym_table.is_entry("World") << "\t" << sym_table.is_entry(test_symbol_2) << std::endl;
-        
+
         return 0;
 }
 

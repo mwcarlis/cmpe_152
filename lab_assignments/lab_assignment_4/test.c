@@ -1,7 +1,11 @@
 int test;
+int variable;
+int kevin;
 
 int print_hello( int v, int z) {
         int value;
+        int hello;
+        int moto;
         value = 10;
         return;
 }

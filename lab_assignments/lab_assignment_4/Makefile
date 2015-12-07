@@ -3,7 +3,7 @@
 a.out: symbol_table.o lex.yy.o
 	c++ -std=c++11 lex.yy.o symbol_table.o cminus.cc -o a.out
 
-lex.yy.o: lex.yy.c cminus.hh 
+lex.yy.o: lex.yy.c cminus.hh
 	cc -c lex.yy.c -o lex.yy.o
 
 lex.yy.c: parser.l

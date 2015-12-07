@@ -60,7 +60,7 @@ whitespace [ \t\n]*
 "/"             return '/';
 "*"             return '*';
 
-"\n" { 
+"\n" {
         ++lineno;
         //printf("line: %d\n", lineno);
 }

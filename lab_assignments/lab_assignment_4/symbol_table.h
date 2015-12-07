@@ -5,21 +5,29 @@
 #include <unordered_map>
 
 
-void cp_add_symbol( std::string sym_name, int mem_bytes, int size, 
-                                std::string type, std::string scope );
+void cp_add_param(int type, int param_num, std::string id);
+struct symbol_entry cp_pop_param();
+struct symbol_entry cp_pop_variable();
+void cp_add_variable(int type, std::string sym_name);
+void cp_add_function( std::string sym_name, std::string type,
+                                        int num_params, std::string ret_type);
+void cp_add_symbol(struct symbol_entry entry);
 struct cp_symbol_entry get_entry(std::string sym_name);
 bool cp_is_entry(std::string sym_name);
 bool cp_is_entry(struct symbol_entry entry);
+void cp_print_table();
 
 
 struct symbol_entry {
-        std::string symbol_name; 
-
-        int mem_bytes;          // Bytes per object.
-        int mem_size;           // Number of elements
-        std::string type;       // Symbol Type
-
-        std::string scope;             // The name of the scope
+        std::string symbol_name;        // Symbol Name (Required)
+        std::string type;               // Symbol Type (Required)
+        int unit_size;                  // The bytes of single unit. (Non-Func)
+        int num_bytes;                  // Number of bytes. (Non-Func)
+        std::string init_val;           // The initial value. (Non-Func)
+        std::string scope;              // The name of the scope. (Required)
+        int num_params;                 // The number of params. (Func only)
+        std::string ret_type;           // The return type. (Func only)
+        int param_num;                  // The param number. (Func only)
 };
 
 
@@ -27,42 +35,19 @@ class SymbolTable {
         private:
                 int entries;
                 std::unordered_map<std::string, symbol_entry> sym_table;
+                SymbolTable *parent;
         public:
-
-                void add_entry(struct symbol_entry item);
+                SymbolTable(SymbolTable *parent);
+                void add_entry(struct symbol_entry entry);
+                bool set_scope(
+                        std::string symbol_name,
+                        int depth,
+                        std::string scope_name
+                );
+                void print_table(void);
 
                 struct symbol_entry get_entry(std::string symbol_name);
-
                 bool is_entry(std::string symbol_name);
                 bool is_entry(struct symbol_entry item);
 };
 
-
-
-
-/*
-int main(void) {
-        SymbolTable item;
-        struct symbol_entry test_symbol;
-        test_symbol.symbol_name = "Hello World";
-        test_symbol.mem_bytes = 1;
-        test_symbol.mem_size = 11;
-        test_symbol.type = "String";
-
-        std::cout << test_symbol.symbol_name << std::endl;
-        item.add_entry(test_symbol);
-        item.get_entry(test_symbol.symbol_name);
-
-        struct symbol_entry test_symbol_2;
-        test_symbol_2.symbol_name = "Weirdo";
-        test_symbol_2.mem_bytes = 1;
-        test_symbol_2.mem_size = 1;
-        test_symbol_2.type = "String";
-
-
-        std::cout << item.is_entry("Hello World") << "\t" << item.is_entry(test_symbol) << std::endl;
-        std::cout << item.is_entry("World") << "\t" << item.is_entry(test_symbol_2) << std::endl;
-        
-        return 0;
-}
-*/
