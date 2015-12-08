@@ -51,10 +51,12 @@ program : declaration_list {
         while (var_stack > 0) {
                 entry = cp_pop_variable();
                 entry.scope = "global";
+                entry.param_num = var_stack;
                 cp_add_symbol(entry);
                 --var_stack;
         }
-        printf("Done- var stack: %d\n", var_stack);
+        // printf("program var stack: %d\n", var_stack);
+        printf("parse complete!\n");
 
 };
 
@@ -64,17 +66,17 @@ declaration_list : declaration_list declaration | declaration {
 declaration : var_declaration | fun_declaration ;
 
 var_declaration : type_specifier ID ';' {
-                // printf("line: %d\t", lineno);
                 if ( !cp_is_entry($2) ) {
                         // Put this ID on the stack.
-                        cp_add_variable($1, $2);
+                        cp_add_variable($1, $2, 0);
                         var_stack += 1;
-                        // printf("Adding symbol\n");
-                        // printf(", var_decl1: %d %s\n", $1, $2);
                 }
 
         } | type_specifier ID '[' NUM ']' ';' {
-                printf(", var_decl2:\n");
+                if (1 == $1) {
+                        cp_add_variable(2, $2, 0);
+                        printf(", var_decl2:\n");
+                }
 };
 
 type_specifier : INT {
@@ -84,31 +86,45 @@ type_specifier : INT {
 };
 
 fun_declaration : type_specifier ID '(' params ')' compound_stmt {
-        // printf("line: %d\t", lineno);
-        // printf("func_decl: %s\t%d\n", $2, $4);
-        struct symbol_entry entry;
-        int x = $4;
-        for ( x = 0; x < $4; ++x ) {
-                entry = cp_pop_param();
-                entry.scope = $2;
-                cp_add_symbol(entry);
-        }
-        // printf("\n");
-        int locals = num_locals;
-        for (x = 0; x < locals; x++) {
-                var_stack -= 1;
-                entry = cp_pop_variable();
-                entry.scope = $2;
-                cp_add_symbol(entry);
-        }
-        num_locals = 0;
+        // Just scanned a function.
         if ( !cp_is_entry($2)) {
+                // Is this a void or an int?
                 if ($1 == 0){
                         cp_add_function($2, "Function", $4, "Void");
                 } else {
                         cp_add_function($2, "Function", $4, "Int");
                 }
         }
+        // We just entered a function.
+        printf("\n--Local Symbol Table:--\n");
+        ++scope_depth;
+        int x;
+        struct symbol_entry entry;
+        for ( x = 0; x < $4; ++x ) {
+
+                // Get the parameters off param stack.
+                // TODO: Print function prep code?
+                entry = cp_pop_param();
+                entry.scope = "global";
+                cp_add_symbol(entry);
+                --param_num;
+        }
+        // TODO: Print function setup code.
+        int locals = num_locals;
+        for (x = 0; x < locals; x++) {
+                // Get the local variables off variable stack.
+                // TODO: Print function locals code.
+                var_stack -= 1;
+                entry = cp_pop_variable();
+                entry.scope = $2;
+                entry.scope_depth = scope_depth;
+                entry.param_num = locals - x;
+                cp_add_symbol(entry);
+        }
+        // We're leaving a function.
+        num_locals = 0;
+        --scope_depth;
+        // TODO: Print function exit code.
 };
 
 params : param_list {
@@ -124,19 +140,23 @@ param_list : param_list ',' param {
 };
 
 param : type_specifier ID {
-        // printf("param: %s\n", $2);
-        cp_add_param($1, param_num, $2);
-        param_num += 1;
+        cp_add_param($1, -param_num, 0, $2);
+        ++param_num;
 
         } | type_specifier ID '[' ']' {
-
+        // Assume it's an int array.
+        if ($1 == 1) {
+                cp_add_param(2, -param_num, 0, $2);
+                ++param_num;
+        } else {
+                printf("Failed array type.\n");
+        }
 };
 
 compound_stmt : '{' local_declarations statement_list '}' ;
 
 local_declarations : local_declarations var_declaration {
         num_locals += 1;
-        // printf("local decl\n");
 
 } | /* empty */ ;
 
@@ -187,10 +207,9 @@ arg_list : arg_list ',' expression | expression ;
 %%
 
 int main(void) {
-        printf("Start\n");
+        printf("Sample output:\n");
         yyparse();
         cp_print_table();
-        printf("Finish\n");
 }
 
 int yyerror(const char *msg) {

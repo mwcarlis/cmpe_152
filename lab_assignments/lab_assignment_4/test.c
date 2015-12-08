@@ -10,9 +10,13 @@ int print_hello( int v, int z) {
         return;
 }
 
+int goodbye_friend( int x, int y, int z) {
+        int zoro;
+        return 1;
+}
+
 int main(void) {
-        int x;
+        int new_val;
         x = 5 + 10;
-        printhello(x);
         return 0;
 }
