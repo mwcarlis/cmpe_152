@@ -15,6 +15,9 @@ extern "C"
 
 int scope_depth = 0;
 int scope_num = 0;
+int last_scope = 0;
+int current_scope = 0;
+
 int param_num = 1;
 int num_locals = 0;
 int var_stack = 0;
@@ -80,16 +83,25 @@ declaration : var_declaration | fun_declaration ;
 var_declaration : type_specifier ID ';' {
                 if ( !cp_is_entry($2) ) {
                         // Put this ID on the stack.
-                        cp_add_variable($1, $2, ebp_local, 0, scope_depth, scope_num);
-                        var_stack += 1;
-                        ebp_local -= 4;
+                        if (cp_add_variable($1, $2, ebp_local, 0, scope_depth, current_scope)){
+                                var_stack += 1;
+                                ebp_local -= 4;
+                        } else if (num_locals > 0) {
+                                // This is a local.
+                                --num_locals;
+                        }
                 }
 
         } | type_specifier ID '[' NUM ']' ';' {
                 int size = $4;
                 if (1 == $1) {
-                        cp_add_variable(2, $2, ebp_local, size, scope_depth, scope_num);
-                        ebp_local -= size * 4;
+                        if (cp_add_variable(2, $2, ebp_local, size, scope_depth, current_scope)) {
+                                var_stack += 1;
+                                ebp_local -= size * 4;
+                        } else if (num_locals > 0) {
+                                // This is a local
+                                --num_locals;
+                        }
                 }
 };
 
@@ -104,17 +116,19 @@ fun_declaration : type_specifier ID lparen params ')' compound_stmt {
         if ( !cp_is_entry($2)) {
                 // Is this a void or an int?
                 if ($1 == 0){
-                        cp_add_function($2, "Function", $4, scope_num, "Void");
+                        if (!cp_add_function($2, "Function", $4, current_scope, "Void")) {
+
+                        }
                 } else {
-                        cp_add_function($2, "Function", $4, scope_num, "Int");
+                        if (!cp_add_function($2, "Function", $4, current_scope, "Int")) {
+
+                        }
                 }
         }
         // We just entered a function.
-        printf("\n--Local Symbol Table:--\n");
         int x;
         struct symbol_entry entry;
         for ( x = 0; x < $4; ++x ) {
-
                 // Get the parameters off param stack.
                 // TODO: Print function prep code?
                 entry = cp_pop_param();
@@ -137,11 +151,11 @@ fun_declaration : type_specifier ID lparen params ')' compound_stmt {
         }
         // We're leaving a function.
         num_locals = 0;
-        // ebp_param = 4;
         // TODO: Print function exit code.
 };
 
 lparen: '(' {
+        printf("\n--Local Symbol Table:--\n");
         ebp_local = CALLEE_SAVE;
         next_ebp_local = CALLEE_SAVE;
 
@@ -162,37 +176,42 @@ param_list : param_list ',' param {
 };
 
 param : type_specifier ID {
-        cp_add_param($1, -param_num, 0, ebp_param, $2);
-        ebp_param += 4;
-        ++param_num;
+        if(cp_add_param($1, -param_num, 0, ebp_param, $2)) {
+                ebp_param += 4;
+                ++param_num;
+        }
 
         } | type_specifier ID '[' ']' {
         // Assume it's an int array.
         if ($1 == 1) {
-                cp_add_param(2, -param_num, 0, ebp_param, $2);
-                ebp_param += 4;
-                ++param_num;
+                if (cp_add_param(2, -param_num, 0, ebp_param, $2)) {
+                        ebp_param += 4;
+                        ++param_num;
+                }
         } else {
                 printf("Failed array type. %d\n", $1);
         }
 };
 
 compound_stmt : lbrace local_declarations statement_list '}' {
-
         // We are exiting the scope.
+
         --scope_depth;
-        // ebp_local = -8;
+        current_scope = last_scope;
 };
 
 lbrace : '{' {
         // We entered a new scope.
+
         ++scope_depth;
         ++scope_num;
+        last_scope = current_scope;
+        current_scope = scope_num;
 
 };
 
 local_declarations : local_declarations var_declaration {
-        num_locals += 1;
+        ++num_locals;
 
 } | /* empty */ ;
 

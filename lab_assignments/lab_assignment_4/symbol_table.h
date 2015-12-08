@@ -5,11 +5,11 @@
 #include <unordered_map>
 
 
-void cp_add_param(int type, int param_num, int size, int ebp, std::string id);
+bool cp_add_param(int type, int param_num, int size, int ebp, std::string id);
 struct symbol_entry cp_pop_param();
 struct symbol_entry cp_pop_variable();
-void cp_add_variable(int type, std::string sym_name, int size, int ebp, int scope_depth, int scope_num);
-void cp_add_function( std::string sym_name, std::string type,
+bool cp_add_variable(int type, std::string sym_name, int size, int ebp, int scope_depth, int scope_num);
+bool cp_add_function( std::string sym_name, std::string type,
                                         int num_params, int scope_num, std::string ret_type);
 void cp_add_symbol(struct symbol_entry entry);
 struct cp_symbol_entry get_entry(std::string sym_name);
