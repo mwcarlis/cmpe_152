@@ -128,13 +128,14 @@ fun_declaration : type_specifier ID lparen params ')' compound_stmt {
         // We just entered a function.
         int x;
         struct symbol_entry entry;
+        int ebp = 8;
         for ( x = 0; x < $4; ++x ) {
                 // Get the parameters off param stack.
                 // TODO: Print function prep code?
                 entry = cp_pop_param();
                 entry.scope = "global";
-                ebp_param -= 4;
-                entry.ebp_offset = ebp_param;
+                entry.ebp_offset = ebp;
+                ebp += 4;
                 cp_add_symbol(entry);
                 --param_num;
         }
