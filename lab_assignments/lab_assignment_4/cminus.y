@@ -14,9 +14,19 @@ extern "C"
 }
 
 int scope_depth = 0;
+int scope_num = 0;
 int param_num = 1;
 int num_locals = 0;
 int var_stack = 0;
+
+int ebp_param = 0;
+int next_ebp_param = 0;
+
+int ebp_local = 0;
+int next_ebp_local = 0;
+
+#define CALLER_SAVE 8
+#define CALLEE_SAVE -8
 
 %}
 
@@ -52,6 +62,8 @@ program : declaration_list {
                 entry = cp_pop_variable();
                 entry.scope = "global";
                 entry.param_num = var_stack;
+                entry.ebp_offset = 0;
+                entry.scope_num = 0;
                 cp_add_symbol(entry);
                 --var_stack;
         }
@@ -68,14 +80,16 @@ declaration : var_declaration | fun_declaration ;
 var_declaration : type_specifier ID ';' {
                 if ( !cp_is_entry($2) ) {
                         // Put this ID on the stack.
-                        cp_add_variable($1, $2, 0);
+                        cp_add_variable($1, $2, ebp_local, 0, scope_depth, scope_num);
                         var_stack += 1;
+                        ebp_local -= 4;
                 }
 
         } | type_specifier ID '[' NUM ']' ';' {
+                int size = $4;
                 if (1 == $1) {
-                        cp_add_variable(2, $2, 0);
-                        printf(", var_decl2:\n");
+                        cp_add_variable(2, $2, ebp_local, size, scope_depth, scope_num);
+                        ebp_local -= size * 4;
                 }
 };
 
@@ -85,19 +99,18 @@ type_specifier : INT {
                 $$ = 0;
 };
 
-fun_declaration : type_specifier ID '(' params ')' compound_stmt {
+fun_declaration : type_specifier ID lparen params ')' compound_stmt {
         // Just scanned a function.
         if ( !cp_is_entry($2)) {
                 // Is this a void or an int?
                 if ($1 == 0){
-                        cp_add_function($2, "Function", $4, "Void");
+                        cp_add_function($2, "Function", $4, scope_num, "Void");
                 } else {
-                        cp_add_function($2, "Function", $4, "Int");
+                        cp_add_function($2, "Function", $4, scope_num, "Int");
                 }
         }
         // We just entered a function.
         printf("\n--Local Symbol Table:--\n");
-        ++scope_depth;
         int x;
         struct symbol_entry entry;
         for ( x = 0; x < $4; ++x ) {
@@ -106,6 +119,8 @@ fun_declaration : type_specifier ID '(' params ')' compound_stmt {
                 // TODO: Print function prep code?
                 entry = cp_pop_param();
                 entry.scope = "global";
+                ebp_param -= 4;
+                entry.ebp_offset = ebp_param;
                 cp_add_symbol(entry);
                 --param_num;
         }
@@ -117,15 +132,22 @@ fun_declaration : type_specifier ID '(' params ')' compound_stmt {
                 var_stack -= 1;
                 entry = cp_pop_variable();
                 entry.scope = $2;
-                entry.scope_depth = scope_depth;
                 entry.param_num = locals - x;
                 cp_add_symbol(entry);
         }
         // We're leaving a function.
         num_locals = 0;
-        --scope_depth;
+        // ebp_param = 4;
         // TODO: Print function exit code.
 };
+
+lparen: '(' {
+        ebp_local = CALLEE_SAVE;
+        next_ebp_local = CALLEE_SAVE;
+
+        ebp_param = CALLER_SAVE;
+        next_ebp_param = CALLER_SAVE;
+}
 
 params : param_list {
                 $$ = $1;
@@ -140,20 +162,34 @@ param_list : param_list ',' param {
 };
 
 param : type_specifier ID {
-        cp_add_param($1, -param_num, 0, $2);
+        cp_add_param($1, -param_num, 0, ebp_param, $2);
+        ebp_param += 4;
         ++param_num;
 
         } | type_specifier ID '[' ']' {
         // Assume it's an int array.
         if ($1 == 1) {
-                cp_add_param(2, -param_num, 0, $2);
+                cp_add_param(2, -param_num, 0, ebp_param, $2);
+                ebp_param += 4;
                 ++param_num;
         } else {
-                printf("Failed array type.\n");
+                printf("Failed array type. %d\n", $1);
         }
 };
 
-compound_stmt : '{' local_declarations statement_list '}' ;
+compound_stmt : lbrace local_declarations statement_list '}' {
+
+        // We are exiting the scope.
+        --scope_depth;
+        // ebp_local = -8;
+};
+
+lbrace : '{' {
+        // We entered a new scope.
+        ++scope_depth;
+        ++scope_num;
+
+};
 
 local_declarations : local_declarations var_declaration {
         num_locals += 1;

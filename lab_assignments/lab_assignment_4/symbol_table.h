@@ -5,12 +5,12 @@
 #include <unordered_map>
 
 
-void cp_add_param(int type, int param_num, int size, std::string id);
+void cp_add_param(int type, int param_num, int size, int ebp, std::string id);
 struct symbol_entry cp_pop_param();
 struct symbol_entry cp_pop_variable();
-void cp_add_variable(int type, std::string sym_name, int size);
+void cp_add_variable(int type, std::string sym_name, int size, int ebp, int scope_depth, int scope_num);
 void cp_add_function( std::string sym_name, std::string type,
-                                        int num_params, std::string ret_type);
+                                        int num_params, int scope_num, std::string ret_type);
 void cp_add_symbol(struct symbol_entry entry);
 struct cp_symbol_entry get_entry(std::string sym_name);
 bool cp_is_entry(std::string sym_name);
@@ -22,10 +22,11 @@ struct symbol_entry {
         std::string symbol_name;        // Symbol Name (Required)
         std::string type;               // Symbol Type (Required)
         int unit_size;                  // The bytes of single unit. (Non-Func)
-        int arr_size;                  // Number of bytes. (Non-Func)
+        int arr_size;                   // Number of bytes. (Non-Func)
         int ebp_offset;
         int scope_depth;
         bool is_param;
+        int scope_num;
         std::string init_val;           // The initial value. (Non-Func)
         std::string scope;              // The name of the scope. (Required)
         int num_params;                 // The number of params. (Func only)

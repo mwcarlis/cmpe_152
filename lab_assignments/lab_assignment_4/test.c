@@ -5,12 +5,15 @@ int kevin;
 int print_hello( int v, int z) {
         int value;
         int hello;
-        int moto;
+        int moto[4];
+        {
+                int test2;
+        }
         value = 10;
         return;
 }
 
-int goodbye_friend( int x, int y, int z) {
+int goodbye_friend( int x[], int y, int p) {
         int zoro;
         return 1;
 }

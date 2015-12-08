@@ -17,8 +17,10 @@ static std::stack<struct symbol_entry> variable_qq;
 
 
 // Scoping hash tables.
-//static std::unordered_map<std::string, SymbolTable> scope_to_entry;
+static std::unordered_map<std::string, SymbolTable> scope_to_index;
 // static std::unordered_map<std::string, std::string> symbol_to_scope;
+
+//static std::
 
 std::string GLOBAL_VAR = "global";
 // Parent of global is null.
@@ -30,20 +32,24 @@ static SymbolTable *current = &global;
 
 // Start C-Compatable wrapper interfaces.
 
-void cp_add_param(int type, int param_num, int size, std::string sym_name) {
+void cp_add_param(int type, int param_num, int size, int ebp, std::string sym_name) {
         /*Add a parameter to the top of the param stack*/
         struct symbol_entry entry;
         if (type == 1) {
                 // 1 is an integer.
                 entry.type = "Int variable";
-                entry.arr_size = size;
-                entry.param_num = param_num;
-                entry.symbol_name = sym_name;
-                param_qq.push(entry);
+        } else if (type == 2) {
+                // 2 is an integer array.
+                entry.type = "Int array";
         } else {
                 // We ignore VOID since it's uninteresting.
                 printf("Bad add_param type: %d\n", type);
         }
+        entry.arr_size = size;
+        entry.param_num = param_num;
+        entry.symbol_name = sym_name;
+        entry.ebp_offset = ebp;
+        param_qq.push(entry);
         return;
 }
 
@@ -56,26 +62,26 @@ struct symbol_entry cp_pop_param() {
         return entry;
 }
 
-void cp_add_variable(int type, std::string sym_name, int size) {
+void cp_add_variable(int type, std::string sym_name, int ebp, int size, int scope_depth, int scope_num) {
         /*Add a variable to the top of the variable stack*/
         struct symbol_entry entry;
         if (type == 1) {
                 // 1 is an integer.
                 entry.type = "Int variable";
-                entry.symbol_name = sym_name;
-                entry.is_param = false;
-                entry.arr_size = size;
-                variable_qq.push(entry);
-        } else if (type == 1) {
+        } else if (type == 2) {
+                // 2 is an integer arra array.
                 entry.type = "Int array";
-                entry.symbol_name = sym_name;
-                entry.is_param = false;
-                entry.arr_size = size;
-                variable_qq.push(entry);
         } else {
                 // We ignore VOID since it's uninteresting.
                 printf("Bad add_param type: %d\n", type);
         }
+        entry.symbol_name = sym_name;
+        entry.is_param = false;
+        entry.arr_size = size;
+        entry.scope_depth = scope_depth;
+        entry.ebp_offset = ebp;
+        entry.scope_num = scope_num;
+        variable_qq.push(entry);
         return;
 }
 
@@ -88,9 +94,10 @@ struct symbol_entry cp_pop_variable() {
 }
 
 void cp_add_function(std::string sym_name, std::string type,
-                        int num_params, std::string ret_type) {
+                        int num_params, int scope_num, std::string ret_type) {
         struct symbol_entry entry;
         entry.symbol_name = sym_name;
+        entry.scope_num = scope_num;
         entry.type = type;
         entry.num_params = num_params;
         entry.ret_type = ret_type;
@@ -108,12 +115,12 @@ void cp_add_symbol(struct symbol_entry entry) {
         std::string func = "Function";
         if (func != entry.symbol_name && entry.param_num > 0 && entry.scope != "global") {
                 std::cout << " Symbol=" << std::setw(10) << entry.symbol_name;
-                std::cout << ", SType=" << std::setw(5) << entry.type;
+                std::cout << ", SType=" << std::setw(14) << entry.type;
 
                 std::cout << " , ArrSize=" << std::setw(3) << entry.arr_size;
                 std::cout << ", ScopeDepth=" << std::setw(3) << entry.scope_depth;
-                std:: cout << ", ScopeNumber=" << std::setw(3) << -99;
-                std::cout << ", EBP Offsets=" << std::setw(4) << -99;
+                std:: cout << ", ScopeNumber=" << std::setw(3) << entry.scope_num;
+                std::cout << ", EBP Offsets=" << std::setw(4) << entry.ebp_offset;
                 //std::cout << ", Scope=" << entry.scope;
 
                 // End.
@@ -165,7 +172,7 @@ void SymbolTable::print_table() {
                         std::cout << ", IsParm=" << std::setw(2) << entry.is_param;
                         std::cout << ", SType=" << std::setw(14) << entry.type;
                         std::cout << ", ArrSize=" << std::setw(3) << entry.arr_size;
-                        std::cout << ", EBP Offest=" << std::setw(4) << entry.param_num;
+                        std::cout << ", EBP Offest=" << std::setw(4) << entry.ebp_offset;
 
                         std::cout << std::endl;
                 }
